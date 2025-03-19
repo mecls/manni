@@ -1,0 +1,2 @@
+# manni
+AI Code reviewer
