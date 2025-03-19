@@ -1,103 +1,100 @@
+"use client";
 import Image from "next/image";
+import { useState, useRef, useEffect } from "react";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [inputText, setInputText] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [output, setOutput] = useState("");
+  const [isVisible, setIsVisible] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  useEffect(() => {
+    adjustHeight();
+  }, [inputText]);
+
+  const summarize = async (text: any) => {
+    try {
+      const encodedCode = encodeURIComponent(text);
+      const response = await fetch(`http://127.0.0.1:8000/summarize?code=${encodedCode}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      console.log
+      const data = await response.json();
+      setOutput(data.summary || "No summary available");
+      setIsVisible(true);
+    } catch (error) {
+      console.error("Error fetching AI response:", error);
+      if (error instanceof Error) {
+        setOutput("Error: " + error.message);
+      } else {
+        setOutput("An unknown error occurred");
+      }
+      setIsVisible(true);
+    }
+  };
+
+  const adjustHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "100px"; // Reset height
+      const newHeight = Math.min(textarea.scrollHeight, 300);
+      textarea.style.height = `${newHeight}px`; // Adjust height dynamically
+    }
+  };
+
+  const handleChange = (e: any) => {
+    setInputText(e.target.value);
+  };
+
+  const handleSend = async () => {
+    if (inputText.trim()) {
+      await summarize(inputText);  // Just call it once
+    }
+  };
+
+  return (
+    <div className="grid grid-rows-[20px_1fr_20px] justify-items-center p-8 font-[family-name:var(--font-geist-sans)] gap-16 items-center min-h-screen pb-20 sm:p-20">
+      <main className="flex flex-col row-start-2 gap-[32px] items-center sm:items-start">
+        <h1 className="text-4xl text-center font-bold sm:text-5xl">
+          Vibe debug with <a className="text-primary">Manni.</a>
+        </h1>
+
+        {isVisible && (
+          <div className="bg-white border border-gray-300 p-4 rounded-md mb-4 ps-10 sm:w-[50%]">
+            <h3 className="font-bold mb-2">Code Summary:</h3>
+            <p>{output}</p>
+          </div>
+        )}        
+        <div className="flex flex-col w-full gap-4 items-center sm:flex-row sm:items-center">
+          <textarea
+            ref={textareaRef}
+            className="border border-gray-300 text-sm w-full focus:outline-none 
+            focus:ring-2 focus:ring-primary lg:w-[200%] max-w-[90%] md:w-[135%] 
+            px-4 py-2 resize-none sm:px-5 sm:text-base 
+            overflow-y-scroll"
+            placeholder="Ask something..."
+            value={inputText}
+            onChange={handleChange}
+            rows={1}
+            style={{ minHeight: "100px", maxHeight: "300px", width: "700px" }}
+          />
+          <button
+            className="bg-amber-400 rounded-full text-sm text-white hover:bg-opacity-0 px-4 py-2 sm:h-12 sm:px-5 sm:text-base transition-colors"
+            onClick={handleSend}
           >
             <Image
               className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+              src="/up-arrow.png"
+              alt="Send button"
+              width={24}
+              height={24}
+              priority
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </button>
         </div>
+
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
