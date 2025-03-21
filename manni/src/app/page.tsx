@@ -51,6 +51,7 @@ export default function Home() {
     if (inputText.trim()) {
       await summarize(inputText);  // Just call it once
     }
+    setInputText("");
   };
 
   return (
