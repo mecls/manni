@@ -30,10 +30,9 @@ async def codeSummary(code: str):
             messages=[{'role': 'user', 'content': prompt}]
         )
         # Check the actual structure of your ollama response
-        # This may vary depending on the version
-        answer = response['message']['content']  # Adjust as needed
+        answer = response['message']['content']
         # # Ensure the response is structured properly
-
+        ## HERE
         return {"summary": answer}
     except Exception as e:
         return {"error": str(e)}
