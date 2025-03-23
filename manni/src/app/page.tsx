@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import CodeComparison from "@/components/compareCode";
+import { s } from "framer-motion/client";
 
 export default function Home() {
   const [inputText, setInputText] = useState("");
@@ -9,20 +10,30 @@ export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [output, setOutput] = useState("");
   const [isVisible, setIsVisible] = useState(false);
-
+  const [linesToHighlight, setLinesToHighlight] = useState<number[]>([]);
+  const [issues, setIssues] = useState<{[key: string]: string}>({});
+  
   useEffect(() => {
     adjustHeight();
   }, [inputText]);
 
-  const summarize = async (text:any) => {
+  const summarize = async (text: any) => {
     try {
       const encodedCode = encodeURIComponent(text);
       const response = await fetch(`http://127.0.0.1:8000/summarize?code=${encodedCode}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       const data = await response.json();
-      setOutput(data.summary || "No summary available");
+      console.log("Data:", data);
+      
+      // Extract line numbers from LineWithIssue
+      const linesWithIssues = Object.keys(data.LineWithIssue).map(line => parseInt(line, 10));
+      
+      setLinesToHighlight(linesWithIssues);
+      setIssues(data.LineWithIssue);
+      setOutput(text); // Set the same code for display with highlighted issues
       setInput(text);
       setIsVisible(true);
     } catch (error) {
@@ -41,25 +52,31 @@ export default function Home() {
     }
   };
 
-  const handleChange = (e:any) => {
+  const handleChange = (e: any) => {
     setInputText(e.target.value);
   };
 
   const handleSend = async () => {
     if (inputText.trim()) {
       await summarize(inputText);
+      setInputText("");
     }
-    setInputText("");
   };
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] justify-items-center p-8 font-[family-name:var(--font-geist-sans)] gap-16 items-center min-h-screen pb-20 sm:p-20">
       <main className="flex flex-col row-start-2 gap-[32px] items-center">
-          {isVisible && (
-            <div className="flex flex-row justify-center p-4 w-full max-w-[820px] space-x-4">
-              <CodeComparison beforeCode={input} afterCode={output} initialLanguage="javascript" />
-            </div>
-          )}
+        {isVisible && (
+          <div className="flex flex-row justify-center p-4 w-full max-w-[820px] space-x-4">
+            <CodeComparison 
+              beforeCode={input} 
+              afterCode={output} 
+              initialLanguage="javascript" 
+              linesToHighlight={linesToHighlight}
+              issues={issues}
+            />
+          </div>
+        )}
         <div className="fixed-top ">
           <h1 className="text-4xl text-center font-bold mb-12 sm:text-5xl">
             Vibe debug with <span className="text-primary">Manni ⚡️</span>.
